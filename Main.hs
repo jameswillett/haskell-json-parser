@@ -73,7 +73,8 @@ jsonBool = f <$> (stringP "true" <|> stringP "false")
         f _      = JsonBool False
 
 maybeNegate :: Num a => Char -> (a -> a)
-maybeNegate s = if s == '-' then negate else id
+maybeNegate ('-') = negate
+maybeNegate _     = id
 
 constP :: a -> Parser a
 constP s = Parser $ \i -> Just (i, s)
@@ -81,7 +82,11 @@ constP s = Parser $ \i -> Just (i, s)
 signP :: Parser Char
 signP = charP '-' <|> constP '+'
 
+notNullDigit :: Parser String
 notNullDigit = notNull $ spanP isDigit
+
+getExponent :: Parser String
+getExponent = ((charP 'e' <|> charP 'E') *> notNullDigit) <|> constP "0"
 
 jsonInteger :: Parser JsonValue
 jsonInteger = JsonInteger <$>
@@ -90,9 +95,9 @@ jsonInteger = JsonInteger <$>
       $ round
       $ maybeNegate s
       $ (read (int ++ "e" ++ ex) :: Float))
-    <$> (signP)
-    <*> (notNullDigit)
-    <*> (((charP 'e' <|> charP 'E') *> notNullDigit) <|> constP "0"))
+    <$> signP
+    <*> notNullDigit
+    <*> getExponent)
 
 jsonFloat :: Parser JsonValue
 jsonFloat = JsonFloat <$>
@@ -100,11 +105,11 @@ jsonFloat = JsonFloat <$>
       maybeNegate s
       $ read
       $ big ++ [dot] ++ little ++ "e" ++ ex)
-    <$> (signP)
-    <*> (notNullDigit)
+    <$> signP
+    <*> notNullDigit
     <*> (charP '.')
-    <*> (notNullDigit)
-    <*> (((charP 'e' <|> charP 'E') *> notNullDigit) <|> constP "0"))
+    <*> notNullDigit
+    <*> getExponent)
 
 stringLiteral :: Parser String
 stringLiteral =
