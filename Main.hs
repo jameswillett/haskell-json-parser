@@ -73,7 +73,7 @@ jsonBool = f <$> (stringP "true" <|> stringP "false")
         f _      = JsonBool False
 
 maybeNegate :: Num a => Char -> (a -> a)
-maybeNegate ('-') = negate
+maybeNegate ('-') = negate -- kirby says `negate`
 maybeNegate _     = id
 
 constP :: a -> Parser a
