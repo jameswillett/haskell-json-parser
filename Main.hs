@@ -82,11 +82,11 @@ constP s = Parser $ \i -> Just (i, s)
 signP :: Parser Char
 signP = charP '-' <|> constP '+'
 
-notNullDigit :: Parser String
-notNullDigit = notNull $ spanP isDigit
+notNullDigits :: Parser String
+notNullDigits = notNull $ spanP isDigit
 
 getExponent :: Parser String
-getExponent = ((charP 'e' <|> charP 'E') *> notNullDigit) <|> constP "0"
+getExponent = ((charP 'e' <|> charP 'E') *> notNullDigits) <|> constP "0"
 
 jsonInteger :: Parser JsonValue
 jsonInteger = JsonInteger <$>
@@ -96,7 +96,7 @@ jsonInteger = JsonInteger <$>
       $ maybeNegate s
       $ (read (int ++ "e" ++ ex) :: Float))
     <$> signP
-    <*> notNullDigit
+    <*> notNullDigits
     <*> getExponent)
 
 jsonFloat :: Parser JsonValue
@@ -106,9 +106,9 @@ jsonFloat = JsonFloat <$>
       $ read
       $ big ++ [dot] ++ little ++ "e" ++ ex)
     <$> signP
-    <*> notNullDigit
+    <*> notNullDigits
     <*> (charP '.')
-    <*> notNullDigit
+    <*> notNullDigits
     <*> getExponent)
 
 stringLiteral :: Parser String
