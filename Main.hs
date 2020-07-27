@@ -85,19 +85,18 @@ notNullDigit = notNull $ spanP isDigit
 
 jsonInteger :: Parser JsonValue
 jsonInteger = JsonInteger <$>
-  ((\s int e ex ->
+  ((\s int ex ->
       toInteger
       $ round
       $ maybeNegate s
       $ (read (int ++ "e" ++ ex) :: Float))
     <$> (signP)
     <*> (notNullDigit)
-    <*> (charP 'e' <|> charP 'E' <|> constP 'e')
-    <*> (notNullDigit <|> constP "0"))
+    <*> (((charP 'e' <|> charP 'E') *> notNullDigit) <|> constP "0"))
 
 jsonFloat :: Parser JsonValue
 jsonFloat = JsonFloat <$>
-  ((\s big dot little e ex ->
+  ((\s big dot little ex ->
       maybeNegate s
       $ read
       $ big ++ [dot] ++ little ++ "e" ++ ex)
@@ -105,8 +104,7 @@ jsonFloat = JsonFloat <$>
     <*> (notNullDigit)
     <*> (charP '.')
     <*> (notNullDigit)
-    <*> (charP 'e' <|> charP 'E' <|> constP 'e')
-    <*> (notNullDigit <|> constP "0"))
+    <*> (((charP 'e' <|> charP 'E') *> notNullDigit) <|> constP "0"))
 
 stringLiteral :: Parser String
 stringLiteral =
