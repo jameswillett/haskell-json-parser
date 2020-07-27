@@ -1,8 +1,9 @@
 module Main where
 
-import Control.Applicative
-import Data.Char
-import Data.Tuple
+import Control.Applicative (Alternative, empty, (<|>), many)
+import Data.Char (isSpace, isDigit)
+import Data.Tuple (swap)
+import Text.Read (readMaybe)
 
 data JsonValue
   = JsonNull
@@ -109,6 +110,31 @@ parseFileWithParser parser path = do
 
 parseFile :: FilePath -> IO (Maybe JsonValue)
 parseFile = parseFileWithParser jsonValue
+
+jsonPath :: [String] -> JsonValue -> Maybe JsonValue
+jsonPath []     _ = Nothing
+jsonPath (p:ps) j =
+  case j of
+    JsonArray  a -> findArray p a >>= returning
+    JsonObject o -> findObject p o >>= returning
+    _            -> Nothing
+  where findObject :: String -> [(String, JsonValue)] -> Maybe JsonValue
+        findObject p l
+          | length l == 0       = Nothing
+          | (fst $ head l) == p = Just (snd $ head l)
+          | otherwise           = findObject p $ tail l
+        findArray :: String -> [JsonValue] -> Maybe JsonValue
+        findArray p l
+          | length l == 0 = Nothing
+          | otherwise     = (readMaybe p :: Maybe Int) >>= safeIndex l
+        safeIndex :: [JsonValue] -> Int -> Maybe JsonValue
+        safeIndex a i
+          | i >= (length a) = Nothing
+          | otherwise       = Just $ a !! i
+        returning :: JsonValue -> Maybe JsonValue
+        returning
+          | length ps == 0 = return
+          | otherwise      = jsonPath ps
 
 main :: IO ()
 main = undefined
