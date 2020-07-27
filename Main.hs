@@ -72,15 +72,28 @@ jsonBool = f <$> (stringP "true" <|> stringP "false")
   where f "true" = JsonBool True
         f _      = JsonBool False
 
+maybeNegate :: Num a => Char -> (a -> a)
+maybeNegate s = if s == '-' then negate else id
+
+constP :: Char -> Parser Char
+constP s = Parser $ \i -> Just (i, s)
+
+signP :: Parser Char
+signP = charP '-' <|> constP '+'
+
 jsonInteger :: Parser JsonValue
-jsonInteger = (JsonInteger . read) <$> (notNull $ spanP isDigit)
+jsonInteger = JsonInteger <$>
+  ((\s n -> maybeNegate s $ read n)
+  <$> (signP)
+  <*> (notNull $ spanP isDigit))
 
 jsonFloat :: Parser JsonValue
-jsonFloat = Parser $ \f -> do
-  (rest,   n  ) <- runParser (notNull $ spanP isDigit) f
-  (rest',  n' ) <- runParser (charP '.') rest
-  (rest'', n'') <- runParser (notNull $ spanP isDigit) rest'
-  Just (rest'', JsonFloat $ read $ n ++ [n'] ++ n'')
+jsonFloat = JsonFloat <$>
+  ((\s big dot little -> maybeNegate s $ read $ big ++ [dot] ++ little)
+    <$> (signP)
+    <*> (notNull $ spanP isDigit)
+    <*> (charP '.')
+    <*> (notNull $ spanP isDigit))
 
 stringLiteral :: Parser String
 stringLiteral =
