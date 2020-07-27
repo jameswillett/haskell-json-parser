@@ -156,7 +156,7 @@ parseFile :: FilePath -> IO (Maybe JsonValue)
 parseFile = parseFileWithParser jsonValue
 
 jsonPath :: [String] -> JsonValue -> Maybe JsonValue
-jsonPath []     _ = Nothing
+jsonPath []     a = Just a
 jsonPath (p:ps) j =
   case j of
     JsonArray  a -> findArray  p a >>= returning
