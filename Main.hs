@@ -60,7 +60,9 @@ ws :: Parser String
 ws = spanP isSpace
 
 sepBy :: Parser a -> Parser b -> Parser [b]
-sepBy sep element = (:) <$> element <*> many (sep *> element) <|> pure []
+sepBy sep element = (:)
+  <$> element
+  <*> many (sep *> element) <|> pure []
 
 jsonNull :: Parser JsonValue
 jsonNull = const JsonNull <$> stringP "null"
@@ -81,7 +83,10 @@ jsonFloat = Parser $ \f -> do
   Just (rest'', JsonFloat $ read $ n ++ [n'] ++ n'')
 
 stringLiteral :: Parser String
-stringLiteral = charP '"' *> ((Parser $ (\input -> f (input, ""))) <|> spanP (/='"')) <* charP '"'
+stringLiteral =
+  charP '"' *>
+  ((Parser $ (\input -> f (input, ""))) <|> spanP (/='"'))
+  <* charP '"'
   where f (x:xs, parsed) =
           if x == '"' && length parsed > 0 && last parsed /= '\\'
             then Just (x:xs, parsed)
@@ -92,16 +97,31 @@ jsonString :: Parser JsonValue
 jsonString = JsonString <$> stringLiteral
 
 jsonArray :: Parser JsonValue
-jsonArray = JsonArray <$> (charP '[' *> ws *> els <* ws <* charP ']')
+jsonArray = JsonArray <$>
+  (charP '[' *> ws *> els <* ws <* charP ']')
   where sep = ws *> charP ',' <* ws
         els = sepBy sep jsonValue
 
 jsonObject :: Parser JsonValue
-jsonObject = JsonObject <$> (charP '{' *> ws *> sepBy (ws *> charP ',' <* ws) pair <* ws <* charP '}')
-  where pair = (\a b c -> (a, c)) <$> stringLiteral <*> (ws *> charP ':' *> ws) <*> jsonValue
+jsonObject =
+  JsonObject <$>
+    (charP '{' *> ws *>
+    sepBy (ws *> charP ',' <* ws)
+    pair <* ws <* charP '}')
+  where pair = (\key _ value -> (key, value))
+          <$> stringLiteral
+          <*> (ws *> charP ':' *> ws)
+          <*> jsonValue
 
 jsonValue :: Parser JsonValue
-jsonValue = jsonNull <|> jsonBool <|> jsonFloat <|> jsonInteger <|> jsonString <|> jsonArray <|> jsonObject
+jsonValue =
+  jsonNull    <|>
+  jsonBool    <|>
+  jsonFloat   <|>
+  jsonInteger <|>
+  jsonString  <|>
+  jsonArray   <|>
+  jsonObject
 
 parseFileWithParser :: Parser a -> FilePath -> IO (Maybe a)
 parseFileWithParser parser path = do
@@ -115,7 +135,7 @@ jsonPath :: [String] -> JsonValue -> Maybe JsonValue
 jsonPath []     _ = Nothing
 jsonPath (p:ps) j =
   case j of
-    JsonArray  a -> findArray p a >>= returning
+    JsonArray  a -> findArray  p a >>= returning
     JsonObject o -> findObject p o >>= returning
     _            -> Nothing
   where findObject :: String -> [(String, JsonValue)] -> Maybe JsonValue
