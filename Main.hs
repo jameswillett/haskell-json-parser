@@ -172,14 +172,17 @@ jsonPath (p:ps) j =
           | length l == 0       = Nothing
           | (fst $ head l) == p = Just (snd $ head l)
           | otherwise           = findObject p $ tail l
+
         findArray :: String -> [JsonValue] -> Maybe JsonValue
         findArray p l
           | length l == 0 = Nothing
           | otherwise     = (readMaybe p :: Maybe Int) >>= safeIndex l
+
         safeIndex :: [JsonValue] -> Int -> Maybe JsonValue
         safeIndex a i
           | i >= (length a) = Nothing
           | otherwise       = Just $ a !! i
+
         returning :: JsonValue -> Maybe JsonValue
         returning
           | length ps == 0 = return
