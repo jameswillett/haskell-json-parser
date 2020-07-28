@@ -7,12 +7,12 @@ import Text.Read (readMaybe)
 
 data JsonValue
   = JsonNull
-  | JsonBool Bool
+  | JsonBool    Bool
   | JsonInteger Integer
-  | JsonFloat Float
-  | JsonString String
-  | JsonArray [JsonValue]
-  | JsonObject [(String, JsonValue)]
+  | JsonFloat   Float
+  | JsonString  String
+  | JsonArray   [JsonValue]
+  | JsonObject  [(String, JsonValue)]
   deriving (Show, Eq)
 
 newtype Parser a = Parser
